@@ -2,6 +2,8 @@ import os
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import SystemMessage, HumanMessage
 
 load_dotenv()
 
@@ -45,6 +47,46 @@ def resolve_embedding_config():
     print("Using OpenAI for embeddings.")
     return model, config
 
+
+def resolve_chat_config():
+    api_key = os.getenv("OPENAI_API_KEY", "").strip()
+    if not api_key:
+        raise EnvironmentError(
+            "Missing OPENAI_API_KEY. Add it to your .env file as OPENAI_API_KEY=your_key "
+            "or set it in your shell before running the pipeline."
+        )
+
+    config = {"api_key": api_key}
+    model = os.getenv("CHAT_MODEL", "").strip()
+
+    is_github_token = (
+        api_key.startswith("github_")
+        or api_key.startswith("ghp_")
+        or api_key.startswith("github_pat_")
+    )
+
+    if is_github_token:
+        config["base_url"] = os.getenv("GITHUB_MODELS_BASE_URL", "https://models.github.ai/inference")
+        if not model:
+            model = "openai/gpt-4o-mini"
+        print("Using GitHub Models for chat completions.")
+        return model, config
+
+    if not (api_key.startswith("sk-") or api_key.startswith("sk-proj-")):
+        raise EnvironmentError(
+            "OPENAI_API_KEY format looks invalid. It should usually start with 'sk-' or 'sk-proj-'."
+        )
+
+    openai_base_url = os.getenv("OPENAI_BASE_URL", "").strip()
+    if openai_base_url:
+        config["base_url"] = openai_base_url
+
+    if not model:
+        model = "gpt-4o-mini"
+
+    print("Using OpenAI for chat completions.")
+    return model, config
+
 #load embeddings and vector store
 model, client_config = resolve_embedding_config()
 embedding_model = OpenAIEmbeddings(model=model, chunk_size=32, **client_config) # type: ignore
@@ -69,6 +111,28 @@ for i, doc in enumerate(relevant_docs):
     print(f"Source: {doc.metadata['source']}") # type: ignore
     print(f"Content: {doc.page_content} ")
 
+#Combine the query and the relevant document contents
+combined_input = f""" Based on the following documents, Please answer this questions: {query}
+
+Documents:
+{chr(10).join([doc.page_content for doc in relevant_docs])}
+
+Please provide a concise answer based on the information from the documents. If the answer is not found in the documents, please say "Answer not found in the provided documents."""
+
+#Create a chatOpenAI model
+chat_model_name, chat_client_config = resolve_chat_config()
+model = ChatOpenAI(model=chat_model_name, **chat_client_config)
+
+#Define the message for the chat model
+messages = [
+    SystemMessage(content="You are a helpful assistant that answers questions based on the provided documents."),
+    HumanMessage(content=combined_input)
+]
+
+#Invoke the model with the combined input
+result=model.invoke(messages)
+
+print(f"\nAnswer: {result.content}")
 
 # Synthetic Questions: 
 
