@@ -4,11 +4,12 @@ A Retrieval-Augmented Generation (RAG) project that uses local text files, LangC
 
 ## Overview
 
-The project has three Python entry points:
+The project has four Python entry points:
 
 - `ingestion_pipeline.py` builds the vector database from the documents in `docs/`.
 - `retrieval_pipeline.py` loads the saved vector database and answers a single retrieval query.
 - `history_aware_generation.py` runs an interactive chat loop that rewrites follow-up questions using chat history, retrieves supporting chunks, and generates answers from the retrieved context.
+- `retreival_methods.py` is a retrieval playground script for comparing retrieval strategies and tuning search parameters.
 
 ## What each file does
 
@@ -46,6 +47,17 @@ This script adds a conversational layer on top of retrieval.
 
 This is the most complete user-facing RAG flow in the repository.
 
+### `retreival_methods.py`
+
+This script is a learning sandbox focused on retrieval behavior.
+
+- Loads the persisted Chroma database from `db/chroma_db`
+- Runs retrieval in a configurable way (for example: plain similarity, score-threshold retrieval, and MMR)
+- Prints retrieved chunks so you can inspect relevance and diversity directly
+- Helps you tune `k`, `fetch_k`, `lambda_mult`, and score threshold values while learning RAG retrieval trade-offs
+
+Use this script when you want to experiment with retrieval methods before wiring them into your full RAG pipeline.
+
 ## Models and tools used
 
 - Embeddings provider:
@@ -65,6 +77,7 @@ This is the most complete user-facing RAG flow in the repository.
 - `ingestion_pipeline.py`: build and persist the vector database from the documents
 - `retrieval_pipeline.py`: run a one-shot semantic retrieval query against the saved database
 - `history_aware_generation.py`: run an interactive retrieval-augmented chat session with history
+- `retreival_methods.py`: explore and compare retrieval methods such as similarity search and MMR
 - `docs/`: source text files
 - `db/chroma_db/`: persisted vector store
 
@@ -103,7 +116,10 @@ GITHUB_MODELS_BASE_URL=https://models.github.ai/inference
 2. Test one-shot retrieval
    - `python retrieval_pipeline.py`
 
-3. Start the history-aware chat session
+3. Explore retrieval methods
+   - `python retreival_methods.py`
+
+4. Start the history-aware chat session
    - `python history_aware_generation.py`
 
 ## Notes
@@ -111,4 +127,3 @@ GITHUB_MODELS_BASE_URL=https://models.github.ai/inference
 - Keep the same provider and embedding model between ingestion and retrieval to avoid embedding mismatch.
 - If you use a GitHub token with GitHub Models, keep `GITHUB_MODELS_BASE_URL` set.
 - `history_aware_generation.py` will re-launch itself with the project virtual environment on Windows if it is started from the wrong interpreter.
-
