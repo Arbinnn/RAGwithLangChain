@@ -4,12 +4,13 @@ A Retrieval-Augmented Generation (RAG) project that uses local text files, LangC
 
 ## Overview
 
-The project has four Python entry points:
+The project has five Python entry points:
 
 - `ingestion_pipeline.py` builds the vector database from the documents in `docs/`.
 - `retrieval_pipeline.py` loads the saved vector database and answers a single retrieval query.
 - `history_aware_generation.py` runs an interactive chat loop that rewrites follow-up questions using chat history, retrieves supporting chunks, and generates answers from the retrieved context.
 - `retreival_methods.py` is a retrieval playground script for comparing retrieval strategies and tuning search parameters.
+- `reciprocal_rank_fusion.py` demonstrates multi-query retrieval and fuses ranked results using Reciprocal Rank Fusion (RRF).
 
 ## What each file does
 
@@ -58,6 +59,17 @@ This script is a learning sandbox focused on retrieval behavior.
 
 Use this script when you want to experiment with retrieval methods before wiring them into your full RAG pipeline.
 
+### `reciprocal_rank_fusion.py`
+
+This script demonstrates multi-query retrieval with result fusion.
+
+- Uses an LLM to generate multiple query variations from one original question
+- Retrieves top-k results for each generated query
+- Applies Reciprocal Rank Fusion (RRF) to merge rankings into one final list
+- Prints fused rankings so you can compare how multi-query retrieval changes relevance
+
+Use this script when you want to learn or test query expansion + fusion strategies in RAG.
+
 ## Models and tools used
 
 - Embeddings provider:
@@ -78,6 +90,7 @@ Use this script when you want to experiment with retrieval methods before wiring
 - `retrieval_pipeline.py`: run a one-shot semantic retrieval query against the saved database
 - `history_aware_generation.py`: run an interactive retrieval-augmented chat session with history
 - `retreival_methods.py`: explore and compare retrieval methods such as similarity search and MMR
+- `reciprocal_rank_fusion.py`: generate query variations and fuse retrieval results with RRF
 - `docs/`: source text files
 - `db/chroma_db/`: persisted vector store
 
@@ -119,7 +132,10 @@ GITHUB_MODELS_BASE_URL=https://models.github.ai/inference
 3. Explore retrieval methods
    - `python retreival_methods.py`
 
-4. Start the history-aware chat session
+4. Run reciprocal rank fusion (multi-query retrieval)
+   - `python reciprocal_rank_fusion.py`
+
+5. Start the history-aware chat session
    - `python history_aware_generation.py`
 
 ## Notes
